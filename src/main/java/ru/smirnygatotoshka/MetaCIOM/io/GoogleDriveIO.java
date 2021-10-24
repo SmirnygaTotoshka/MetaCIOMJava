@@ -16,6 +16,7 @@ import com.google.api.services.drive.model.File;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
+import tech.tablesaw.api.DoubleColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
 
@@ -25,6 +26,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -138,11 +141,16 @@ public class GoogleDriveIO {
         Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
+        String[] animals = {"bear", "cat", "giraffe"};
+        double[] cuteness = {90.1, 84.3, 99.7};
 
-        createFile("https://drive.google.com/drive/folders/18jSj1ZR9nkp08grePiijv0ptl3lqojDq",
-                "D:\\DataSpellWorkspace\\COVID.ipynb",
-                "COVID.ipynb",
-                "text/json");
+        Table test_write =
+                Table.create("Cute Animals")
+                        .addColumns(
+                                StringColumn.create("Animal types", animals),
+                                DoubleColumn.create("rating", cuteness));
+        uploadTable("https://drive.google.com/drive/folders/18jSj1ZR9nkp08grePiijv0ptl3lqojDq",
+                test_write,null);
         System.out.println("Successful Meow");
         /*// Print the names and IDs for up to 10 files.
         FileList result = service.files().list()
@@ -161,7 +169,15 @@ public class GoogleDriveIO {
         }*/
     }
 
-    public static void createFile(String outFolderUrl,String inFilename,String outFilename, String type) throws GeneralSecurityException, IOException {
+    public static void uploadTable(String outFolderUrl, Table table, String outFilename) throws IOException, GeneralSecurityException {
+        String temp_name = "tmp_excel.xlsx";
+        String out = outFilename == null ? table.name() : outFilename;
+        ExcelIO.write(table, temp_name,false);
+        uploadFile(outFolderUrl,temp_name, out, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","application/vnd.google-apps.spreadsheet");
+        Files.delete(Paths.get(temp_name));
+    }
+
+    public static void uploadFile(String outFolderUrl, String inFilename, String outFilename, String local_mime,String target_mime) throws GeneralSecurityException, IOException {
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
@@ -170,8 +186,10 @@ public class GoogleDriveIO {
         File fileMetadata = new File();
         fileMetadata.setName(outFilename);
         fileMetadata.setParents(Collections.singletonList(folderId));
+        if (target_mime != null)
+            fileMetadata.setMimeType(target_mime);
         java.io.File filePath = new java.io.File(inFilename);
-        FileContent mediaContent = new FileContent(type, filePath);
+        FileContent mediaContent = new FileContent(local_mime, filePath);
         File file = service.files().create(fileMetadata, mediaContent)
                 .setFields("id, parents")
                 .execute();
