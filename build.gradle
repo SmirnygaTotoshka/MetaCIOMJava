@@ -1,0 +1,46 @@
+plugins {
+    id 'java'
+}
+apply plugin: 'java'
+apply plugin: 'application'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+version = '1.0'
+group 'ru.smirnygatotoshka'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    google()
+}
+compileJava {
+    options.encoding = 'UTF-8'
+}
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    implementation 'com.google.api-client:google-api-client:1.32.2'
+    implementation 'me.tongfei:progressbar:0.9.2'
+    implementation 'org.apache.poi:poi-ooxml:5.0.0'
+    implementation 'org.json:json:20210307'
+// https://mvnrepository.com/artifact/tech.tablesaw/tablesaw-core
+    implementation 'tech.tablesaw:tablesaw-core:0.41.0'
+// https://mvnrepository.com/artifact/tech.tablesaw/tablesaw-jsplot
+    implementation 'tech.tablesaw:tablesaw-jsplot:0.41.0'
+// https://mvnrepository.com/artifact/com.opencsv/opencsv
+    implementation 'com.opencsv:opencsv:5.5.2'
+    implementation 'com.google.oauth-client:google-oauth-client-jetty:1.23.0'
+    implementation 'com.google.apis:google-api-services-drive:v3-rev110-1.23.0'
+    // https://mvnrepository.com/artifact/com.google.oauth-client/google-oauth-client
+    implementation 'com.google.oauth-client:google-oauth-client:1.32.1'
+    implementation 'com.google.apis:google-api-services-sheets:v4-rev581-1.25.0'
+// https://mvnrepository.com/artifact/com.google.http-client/google-http-client
+    implementation 'com.google.http-client:google-http-client:1.40.1'
+// https://mvnrepository.com/artifact/com.google.http-client/google-http-client-jackson2
+    implementation 'com.google.http-client:google-http-client-jackson2:1.40.1'
+
+}
+
+test {
+    useJUnitPlatform()
+}
