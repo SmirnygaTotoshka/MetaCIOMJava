@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: tech.tablesaw:tablesaw-core:0.41.0">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/tech.tablesaw/tablesaw-core/0.41.0/7463f4419ff63188859c597de6b8706ba69c99b3/tablesaw-core-0.41.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/tech.tablesaw/tablesaw-core/0.41.0/72f7760c421be01ac9de8a27005aec3ea31df606/tablesaw-core-0.41.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

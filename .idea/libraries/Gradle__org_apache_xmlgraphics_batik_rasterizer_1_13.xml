@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.apache.xmlgraphics:batik-rasterizer:1.13">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.xmlgraphics/batik-rasterizer/1.13/2377ed2b69069bd5c53a52eb055108667b4183e/batik-rasterizer-1.13.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.xmlgraphics/batik-rasterizer/1.13/f613f24c3cc2aecead94a6f49ea46a1f2f30fb29/batik-rasterizer-1.13-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

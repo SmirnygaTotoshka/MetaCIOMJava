@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: tech.tablesaw:tablesaw-jsplot:0.41.0">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/tech.tablesaw/tablesaw-jsplot/0.41.0/cc7d4990c5b1871bcdad454d72ab0f664adb4868/tablesaw-jsplot-0.41.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/tech.tablesaw/tablesaw-jsplot/0.41.0/31e2661ce202624c28e93f3e97757d76f92f9ef1/tablesaw-jsplot-0.41.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

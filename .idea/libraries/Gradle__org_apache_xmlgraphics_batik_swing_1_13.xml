@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.apache.xmlgraphics:batik-swing:1.13">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.xmlgraphics/batik-swing/1.13/232653b04333483431cce9cdece2978fc6577c27/batik-swing-1.13.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.xmlgraphics/batik-swing/1.13/79bf8d495661569a435b12c9902d365903d2d9ad/batik-swing-1.13-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

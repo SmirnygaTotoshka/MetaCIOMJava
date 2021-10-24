@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: org.apache.xmlgraphics:batik-slideshow:1.13">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.xmlgraphics/batik-slideshow/1.13/4d6ada95bcd8173f6df31a5ed85ecc84f33fb580/batik-slideshow-1.13.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.apache.xmlgraphics/batik-slideshow/1.13/42afe274b17bc1cac3c2ea7db34c2dab33a5d09d/batik-slideshow-1.13-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
