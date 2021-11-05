@@ -20,10 +20,7 @@ import tech.tablesaw.api.DoubleColumn;
 import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -123,9 +120,6 @@ public class GoogleDriveIO {
         return max;
     }
 
-    public static void uploadSpreadsheet(String path, Table table){
-
-    }
     /**
      * Prints the names and majors of students in a sample spreadsheet:
      * https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
@@ -175,6 +169,18 @@ public class GoogleDriveIO {
         ExcelIO.write(table, temp_name,false);
         uploadFile(outFolderUrl,temp_name, out, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","application/vnd.google-apps.spreadsheet");
         Files.delete(Paths.get(temp_name));
+    }
+
+    public static ByteArrayOutputStream readFile(String url,String mime) throws IOException, GeneralSecurityException {
+        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        Drive service = new Drive.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+        String fileId = getIdFromURL(url);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        service.files().get(fileId)
+                .executeMediaAndDownloadTo(outputStream);
+        return outputStream;
     }
 
     public static void uploadFile(String outFolderUrl, String inFilename, String outFilename, String local_mime,String target_mime) throws GeneralSecurityException, IOException {

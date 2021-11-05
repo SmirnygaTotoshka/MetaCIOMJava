@@ -1,6 +1,11 @@
 package ru.smirnygatotoshka.MetaCIOM;
 
+import ru.smirnygatotoshka.MetaCIOM.io.GoogleDriveIO;
+
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 
 public class FreeVariants{
@@ -12,7 +17,7 @@ public class FreeVariants{
         variants = new ArrayList<>();
         this.question = question;
         if (question.metadata.isToGoogle()){
-            //TODO
+            path = question.metadata.getPathToOutputDirectory();
         }
         else {
             path = question.metadata.getPathToOutputDirectory() + File.separator + question.question.replaceAll("[\\\\\\\\/:*?\\\"<>|]","") + "_freeAns.txt";
@@ -37,7 +42,19 @@ public class FreeVariants{
     }
 
     private void saveToGoogle() {
-        //TODO mat filter
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("tmp.txt"));
+            for (String line : variants){
+                writer.write(line);
+                writer.newLine();
+            }
+            writer.close();
+            GoogleDriveIO.uploadFile(path,"tmp.txt", question.getFilenameWithoutExtension() + "_freeAn.txt","text/plain","text/plain");
+            Files.delete(Paths.get("tmp.txt"));
+        } catch (IOException | GeneralSecurityException e) {
+            System.err.println("Can`t save free variants for " + question.question);
+            e.printStackTrace();
+        }
     }
 
     private void saveToLocal() {

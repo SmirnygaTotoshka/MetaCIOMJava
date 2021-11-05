@@ -10,6 +10,7 @@ import tech.tablesaw.aggregate.AggregateFunctions;
 import tech.tablesaw.api.Table;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,7 +20,7 @@ class SimpleQuestionTest {
     Data metadata;
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() throws IOException, GeneralSecurityException {
         data = Table.read().csv("C:\\Users\\SmirnygaTotoshka\\Downloads\\Опрос коррупция.csv");
         metadata = new MetadataParser("C:\\Users\\SmirnygaTotoshka\\Documents\\CommonWorkspace\\Univer\\ЦИОМ\\test_metadata\\metadata.json").parse();
     }

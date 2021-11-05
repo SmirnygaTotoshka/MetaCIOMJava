@@ -3,6 +3,7 @@ package ru.smirnygatotoshka.MetaCIOM;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import ru.smirnygatotoshka.MetaCIOM.io.ExcelIO;
+import ru.smirnygatotoshka.MetaCIOM.io.GoogleDriveIO;
 import tech.tablesaw.api.DoubleColumn;
 import tech.tablesaw.api.NumericColumn;
 import tech.tablesaw.api.Table;
@@ -12,6 +13,7 @@ import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 public abstract class Question {
 
@@ -73,13 +75,19 @@ public abstract class Question {
     }
     public void save(Table table, boolean append){
         if (metadata.isToGoogle())
-            saveToGoogle(table, append);
+            saveToGoogle(table);
         else
             saveToLocal(table,append);
     }
 
-    private void saveToGoogle(Table table,boolean append){
-        //TODO save to google drive, and other formats
+    private void saveToGoogle(Table table){
+        try{
+            String out_link = getOutputPath();
+            GoogleDriveIO.uploadTable(out_link, table, getFilenameWithoutExtension());
+        }catch (IOException | GeneralSecurityException e) {
+            System.err.println("Cannot save the question " + question);
+            e.printStackTrace();
+        }
     }
 
     private void saveToLocal(Table table,boolean append) {
@@ -105,8 +113,7 @@ public abstract class Question {
 
     private String getOutputPath() {
         if (metadata.isToGoogle()){
-            //TODO
-            return null;
+            return metadata.getPathToOutputDirectory();
         }
         else {
             return metadata.getPathToOutputDirectory() + File.separator + getFilename();
@@ -122,6 +129,10 @@ public abstract class Question {
         return filename.replaceAll("[\\\\\\\\/:*?\\\"<>|]","");
     }
 
+    public String getFilenameWithoutExtension(){
+        String filename = getFilename();
+        return filename.substring(0,filename.lastIndexOf("."));
+    }
 
     public static Question buildQuestion(JSONObject question, Data metadata) throws IllegalArgumentException {
         String type = question.getString("type");
@@ -164,7 +175,7 @@ public abstract class Question {
             return new MatrixQuestion(q, a, true, hasFreeAnswer,c, start, finish, gr,d, metadata);
         } else if (type.contentEquals(TypeQuestions.FREE.name())) {
             int column = question.getInt("column")-2;
-            return new FreeAnswerQuestion(metadata, q, column);
+            return new FreeAnswerQuestion(metadata, q, column,true);
         } else throw new IllegalArgumentException("Неизвестный тип вопроса.");
     }
 

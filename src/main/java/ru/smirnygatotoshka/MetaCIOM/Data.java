@@ -34,7 +34,7 @@ public class Data {
         this.allTable = allTable;
         this.allTable.removeColumns(0);//delete column with fill date
         this.allTable.dropDuplicateRows();
-        this.numberOfRespondents = this.allTable.rowCount();
+        this.numberOfRespondents = this.allTable.rowCount();//TODO
         this.pathToOutputDirectory = pathToOutputDirectory;
         this.saveFreeAnswers = saveFreeAnswers;
         this.toGoogle = toGoogle;

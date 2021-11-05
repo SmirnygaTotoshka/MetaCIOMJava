@@ -59,7 +59,7 @@ public class DataCleaner {
 
     private Table[] cleanMatrix(MatrixQuestion question) {
         Table[] clean = new Table[getNumGroupingFactors(question)];
-        Table matrix = question.metadata.getAllTable().select(question.getColumnNames());
+        Table matrix = question.metadata.getAllTable().selectColumns(question.getColumnNames());
         String[] levels = null;
         if (question.groupingWith.length > 0)
             levels = question.metadata.getAllTable().categoricalColumn(question.groupingWith[0]).removeMissing().unique().asStringColumn().asObjectArray();
@@ -100,14 +100,14 @@ public class DataCleaner {
         List<String> colNames =  question.metadata.getAllTable().columnNames();
         for (int i = 0;i < question.groupingWith.length;i++){
             String colName = colNames.get(question.groupingWith[i]);
-            CategoricalColumn categoricalColumn = question.metadata.getAllTable().select(colName).dropRowsWithMissingValues().categoricalColumn(colName);
+            CategoricalColumn categoricalColumn = question.metadata.getAllTable().selectColumns(colName).dropRowsWithMissingValues().categoricalColumn(colName);
             num *= categoricalColumn.countUnique();
         }
         return num;
     }
 
     private Table cleanSimple(SimpleQuestion question) {
-        Table subset = question.metadata.getAllTable().select(question.getColumnNamesBindingWithQuestion());
+        Table subset = question.metadata.getAllTable().selectColumns(question.getColumnNamesBindingWithQuestion());
         StringColumn strCol = subset.column(0).asStringColumn();
         strCol.setName(subset.column(0).name());
         FreeVariants variants = new FreeVariants(question);

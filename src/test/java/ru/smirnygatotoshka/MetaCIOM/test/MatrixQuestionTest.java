@@ -11,6 +11,7 @@ import tech.tablesaw.api.Table;
 
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.util.Locale;
@@ -22,7 +23,7 @@ class MatrixQuestionTest {
     MatrixQuestion testQuestion;
     Data metadata;
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() throws IOException, GeneralSecurityException {
         metadata = new MetadataParser("C:\\Users\\SmirnygaTotoshka\\Documents\\CommonWorkspace\\Univer\\ЦИОМ\\test_metadata\\metadata_matrix.json").parse();
         data = ExcelIO.read("C:\\Users\\SmirnygaTotoshka\\Downloads\\RNIMU GOOGLE SURVEY FOR FOREIGN STUDENTS  (Ответы).xlsx",0);
     }

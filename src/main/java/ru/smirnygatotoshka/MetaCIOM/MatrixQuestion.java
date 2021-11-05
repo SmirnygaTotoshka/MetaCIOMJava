@@ -34,7 +34,7 @@ public class MatrixQuestion extends SimpleQuestion {
     public Table calculate(Table data) {
         Table[] ansByCat = new Table[categoryNames.length];
         for (int i = 0; i < data.columnCount(); i++) {
-            Table t = data.select(data.column(i)).copy().dropRowsWithMissingValues();
+            Table t = data.selectColumns(data.column(i)).copy().dropRowsWithMissingValues();
             columnName = columnNames[i];
             ansByCat[i] = super.calculate(t);
         }
