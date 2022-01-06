@@ -1,116 +1,107 @@
 package ru.smirnygatotoshka.MetaCIOM.io;
 
-import com.opencsv.CSVWriter;
 import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import tech.tablesaw.api.StringColumn;
 import tech.tablesaw.api.Table;
-import tech.tablesaw.io.csv.CsvReadOptions;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 
-public class ExcelIO {
-    public static Table read(String path, int sheetIndex) throws IOException {
-        String pathToConverted = "";
-        Table table = null;
-        File converted = null;
-        try {
-            pathToConverted = convertXLSXToCSV(path, sheetIndex);
-            converted = new File(pathToConverted);
-            CsvReadOptions options = CsvReadOptions.builder(converted).separator(';').header(true).build();
-            table = Table.read().csv(options);
-        }
-        catch (IOException e){
-            e.printStackTrace();
-        }
-        finally {
-            if (!converted.delete()) throw new IOException("Cannot delete temp file");
-            return table;
-        }
-    }
+public class ExcelIO implements TableIO {
 
-    public static void write(Table table, String output, boolean append) throws IOException{
-        //Blank workbook
-        XSSFWorkbook workbook;
-        File o = new File(output);
-        if (append && o.exists())
-            workbook = new XSSFWorkbook(output);
-        else
-            workbook = new XSSFWorkbook();
-
-        XSSFSheet sheet = workbook.createSheet(table.name());
-
-        ArrayList<String> header = (ArrayList<String>) table.columnNames();
-        //write header
-        Row h = sheet.createRow(0);
-        int cellnum = 0;
-        for (String colname : header){
-            Cell cell = h.createCell(cellnum++);
-            cell.setCellValue(colname);
-        }
-        //write table body
-        for (int rownum = 0; rownum < table.rowCount();rownum++){
-            Row r = sheet.createRow(rownum+1);
-            for (cellnum = 0; cellnum < table.columnCount();cellnum++){
-                Cell cell = r.createCell(cellnum);
-                cell.setCellValue(table.getUnformatted(rownum,cellnum));
+    @Override
+    public Table readTable(String path) throws IOException {
+        XSSFWorkbook workbook = new XSSFWorkbook(path);
+        XSSFSheet sheet = workbook.getSheetAt(0);
+        ArrayList<StringColumn> cols = new ArrayList<>();//iterating
+        int num_cols = sheet.getRow(sheet.getFirstRowNum()).getPhysicalNumberOfCells();// over excel file
+        for (int i = sheet.getFirstRowNum(); i < sheet.getPhysicalNumberOfRows(); i++) {
+            XSSFRow row = sheet.getRow(i);
+            if (row == null) {
+               continue;
             }
-        }
-
-        FileOutputStream out = new FileOutputStream(output);
-        workbook.write(out);
-        out.close();
-        workbook.close();
-    }
-
-
-    public static String convertXLSXToCSV(String xlsx_path, int sheetIndex) throws IOException {
-        XSSFWorkbook workbook = new XSSFWorkbook(xlsx_path);
-        XSSFSheet sheet = workbook.getSheetAt(sheetIndex);
-        int numRows;
-        numRows = sheet.getPhysicalNumberOfRows();
-
-        int numCols = 0; // No of columns
-        int tmp = 0;
-
-        // This trick ensures that we get the data properly even if it doesn't start from first few rows
-        for(int i = 0; i < 10 || i < numRows; i++) {
-            Row row = sheet.getRow(i);
-            if(row != null) {
-                tmp = sheet.getRow(i).getPhysicalNumberOfCells();
-                if(tmp > numCols) numCols = tmp;
-            }
-        }
-        File excel = new File(xlsx_path);
-        String path = excel.getParent();
-        String newName = excel.getName().substring(0,excel.getName().lastIndexOf(".xlsx")) + "_converted.csv";
-        char separator = ';';
-        String pathToConverted = path + File.separator + newName;
-        CSVWriter writer = new CSVWriter(new FileWriter(pathToConverted),separator,'"', '"', "\n");
-
-        for(int r = 0; r < numRows; r++) {
-            Row row = sheet.getRow(r);
-            if(row != null) {
-                String[] values = new String[numCols];
-                for(int c = 0; c < numCols; c++) {
-                    Cell cell = row.getCell(c);
-                    if(cell != null) {
-                        DataFormatter formatter = new DataFormatter();
-                        values[c] = formatter.formatCellValue(cell);
-                    }
-                    else {
-                        values[c] = "";
+            else {
+                for (int j = 0; j < num_cols; j++) {
+                    XSSFCell cell = row.getCell(j, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+                    String val = getCellValue(cell);
+                    if (i == sheet.getFirstRowNum()) {
+                        cols.add(StringColumn.create(val));
+                    } else {
+                        cols.get(j).append(val);
                     }
                 }
-                writer.writeNext(values);
             }
         }
-        writer.close();
-        workbook.close();
-        return pathToConverted;
+        String name = path.substring(path.lastIndexOf(File.separator) + 1, path.lastIndexOf('.'));
+        Table table = Table.create(name);
+        for (StringColumn c : cols)
+            table.addColumns(c);
+        return table;
     }
 
+    private String getCellValue(Cell cell) {
+        if (cell == null) return "";
+        switch (cell.getCellType()) {
+            case STRING:    //field that represents string cell type
+                return cell.getStringCellValue();
+            case _NONE:
+                return "";
+            case NUMERIC:    //field that represents number cell type
+                return String.valueOf((int) cell.getNumericCellValue());
+            case FORMULA:
+                return String.valueOf(cell.getNumericCellValue());
+            case BLANK:
+                return "0";
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case ERROR:
+                return "#ОШИБ";
+            default:
+                return "";
+        }
+    }
+
+    @Override
+    public void writeTables(Table[] tables, String dir) throws IOException {
+        String path = dir + File.separator + tables[0].name().replaceAll("[\\\\\\\\/:*?\\\"<>|]", "") + ".xlsx";
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        CellStyle style = workbook.createCellStyle();
+        style.setWrapText(true);
+        style.setShrinkToFit(true);
+        for (int i = 0;i < tables.length;i++) {
+            String suf = tables[i].name().length() <= 15 ? tables[i].name() : tables[i].name().substring(0,15);
+            String name = (i+1) + "_" + suf;
+            XSSFSheet sheet = workbook.createSheet(name);
+            ArrayList<String> header = (ArrayList<String>) tables[i].columnNames();
+            //write header
+            Row h = sheet.createRow(0);
+            int cellnum = 0;
+            for (String colname : header) {
+                Cell cell = h.createCell(cellnum++);
+                cell.setCellValue(colname);
+            }
+            //write table body
+            for (int rownum = 0; rownum < tables[i].rowCount(); rownum++) {
+                Row r = sheet.createRow(rownum + 1);
+                for (cellnum = 0; cellnum < tables[i].columnCount(); cellnum++) {
+                    Cell cell = r.createCell(cellnum);
+                    cell.setCellStyle(style);
+                    cell.setCellValue(tables[i].get(rownum, cellnum).toString());
+                }
+            }
+            FileOutputStream out = new FileOutputStream(path);
+            workbook.write(out);
+            out.close();
+        }
+        workbook.close();
+    }
 }

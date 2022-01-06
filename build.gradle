@@ -38,6 +38,7 @@ dependencies {
     implementation 'com.google.http-client:google-http-client:1.40.1'
 // https://mvnrepository.com/artifact/com.google.http-client/google-http-client-jackson2
     implementation 'com.google.http-client:google-http-client-jackson2:1.40.1'
+    implementation 'com.google.apis:google-api-services-docs:v1-rev20190827-1.30.1'
 
 }
 

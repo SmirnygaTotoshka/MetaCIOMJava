@@ -1,32 +1,47 @@
 package ru.smirnygatotoshka.MetaCIOM;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
-import ru.smirnygatotoshka.MetaCIOM.io.ExcelIO;
-import ru.smirnygatotoshka.MetaCIOM.io.GoogleDriveIO;
 import tech.tablesaw.api.DoubleColumn;
 import tech.tablesaw.api.NumericColumn;
 import tech.tablesaw.api.Table;
-import tech.tablesaw.io.DataFrameWriter;
 
-import java.io.File;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
+
+/**
+ * Базовый класс, описывающий бизнес-логику обработки/создания опроса
+ *
+ * @author SmirnygaTotoshka
+ * */
 public abstract class Question {
 
-    protected enum TypeCalculate {
+    Question() {
+
+    }
+
+    /**
+     * Описывает перечень статистик, которые могут быть посчитаны для вопроса
+     * Absolute - абсолютная частота
+     * Procent - относительная частота
+     * Mean - среднее
+     * Median - медиана
+     * */
+    protected enum TypeStatistics {
         ABSOLUTE,
         PROCENT,
         MEAN,
         MEDIAN
     }
 
+    /**
+     * Сигнализирует на что делить при подсчете относительной частоты
+     * RESPONDENTS - делить на общее число репондентов (общее число строк в общей таблице)
+     * ANSWERED - делить на число, ответивших на этот вопрос
+     * */
     protected enum Divider{
-        RESPONDENTS,//делить на общее число репондентов
-        ANSWERED;//делить на число ответивших на этот вопрос
+        RESPONDENTS,
+
+        ANSWERED;
         private int numDivider;
 
         public int getNumDivider() {
@@ -37,161 +52,72 @@ public abstract class Question {
             this.numDivider = numDivider;
         }
     }
+    /**
+     * Переменная, содержащая в себе общие сведения об опросе
+     * @see Metadata
+     * */
+    protected Metadata metadata;
 
-    private enum TypeQuestions {
-        SINGLE,
-        MULTIPLE,
-        MATRIX_SINGLE,
-        MATRIX_MULTIPLE,
-        FREE
-    }
-
-
-    protected Data metadata;
-    protected boolean multiple;
-    protected boolean hasFreeAnswer;
-    protected TypeCalculate[] calculate;
-    protected int[] groupingWith;
+    /**
+     * @see TypeStatistics
+     * */
+    protected TypeStatistics[] statistics;
+    /**
+     * Возможные варианты ответа на вопрос. Пустой массив, если вопрос с свободным ответом
+     * */
     protected String[] answersVariants;
+    /**
+     * Формулировка вопроса
+     * */
     protected String question;
+
+    /**
+     * @see Divider
+     */
     protected Divider divider;
 
-    protected Question(Data metadata, boolean multiple, boolean hasFreeAnswer, TypeCalculate[] calculate, int[] groupingWith, String[] answersVariants, String question,Divider divider) {
+    protected boolean hasFreeAnswers;
+
+
+
+    protected Question(Metadata metadata, TypeStatistics[] calculate, String[] answersVariants, String question, Divider divider,boolean hasFreeAnswers) {
         this.metadata = metadata;
-        this.multiple = multiple;
-        this.hasFreeAnswer = hasFreeAnswer;
-        this.calculate = calculate;
-        this.groupingWith = groupingWith;
+        this.statistics = calculate;
         this.answersVariants = answersVariants;
         this.question = question;
         this.divider = divider;
+        this.hasFreeAnswers = hasFreeAnswers;
     }
 
+    /**
+     * Создает экземпляр объекта из его мета-описания на языке JSON
+     * */
+    public abstract Question build(Metadata metadata, JSONObject question);
+
+    /**
+     * Подготавливает необходимые данные к расчёту статистик
+     * */
+    public abstract Table clean();
+
+    /**
+     * Рассчитывает необходимые статистики по данному вопросу
+     * */
     public abstract Table calculate(Table data);
-    public void save(ArrayList<Table> results) {
-        for (Table t : results){
-            save(t, true);
-        }
-    }
-    public void save(Table table, boolean append){
-        if (metadata.isToGoogle())
-            saveToGoogle(table);
-        else
-            saveToLocal(table,append);
-    }
 
-    private void saveToGoogle(Table table){
-        try{
-            String out_link = getOutputPath();
-            GoogleDriveIO.uploadTable(out_link, table, getFilenameWithoutExtension());
-        }catch (IOException | GeneralSecurityException e) {
-            System.err.println("Cannot save the question " + question);
-            e.printStackTrace();
-        }
-    }
+    /**
+     * Возвращает свободные ответы, если они имеются
+     * */
+    public abstract String[] getFreeAnswers();
 
-    private void saveToLocal(Table table,boolean append) {
-        try {
-            String path = getOutputPath();
-            DataFrameWriter writer = table.write();
-            switch (metadata.getFormat()) {
-                case xlsx:
-                    ExcelIO.write(table, path, append);
-                    break;
-                case csv:
-                    if (append) throw new IOException("CSV doesnt support more than 1 table in a 1 file");
-                    writer.csv(path);
-                default:
-                    if (append) throw new IOException("TXT doesnt support more than 1 table in a 1 file");
-                    writer.toFile(path);
-            }
-        } catch (IOException e) {
-            System.err.println("Cannot save the question " + question);
-            e.printStackTrace();
-        }
-    }
+    /**
+     * Создает строку с REST API запросом для создания поля в гугл-форме с данным вопросом
+     * */
+    public abstract String createForm();
 
-    private String getOutputPath() {
-        if (metadata.isToGoogle()){
-            return metadata.getPathToOutputDirectory();
-        }
-        else {
-            return metadata.getPathToOutputDirectory() + File.separator + getFilename();
-        }
-    }
 
-    public String getFilename() {
-        String calcs = "";
-        for (int i = 0; i < calculate.length; i++) {
-            calcs += calculate[i].name() + "_";
-        }
-        String filename = question + "_" + calcs + "." + metadata.getFormat().name();
-        return filename.replaceAll("[\\\\\\\\/:*?\\\"<>|]","");
-    }
-
-    public String getFilenameWithoutExtension(){
-        String filename = getFilename();
-        return filename.substring(0,filename.lastIndexOf("."));
-    }
-
-    public static Question buildQuestion(JSONObject question, Data metadata) throws IllegalArgumentException {
-        String type = question.getString("type");
-        String q = question.getString("question");
-        Divider d = Divider.valueOf(question.getString("divider"));
-
-        JSONArray arrayAnswers = question.getJSONArray("answers");
-        String[] a = new String[arrayAnswers.length()];
-        for (int i = 0; i < a.length; i++) {
-            a[i] = arrayAnswers.get(i).toString();
-        }
-
-        JSONArray arrayCalculations = question.getJSONArray("calculate");
-        TypeCalculate[] c = new TypeCalculate[arrayCalculations.length()];
-        for (int i = 0; i < c.length; i++) {
-            c[i] = TypeCalculate.valueOf(arrayCalculations.getString(i));
-        }
-
-        JSONArray grouping_with = question.getJSONArray("grouping_with");
-        int[] gr = new int[grouping_with.length()];
-        for (int i = 0; i < gr.length; i++) {
-            gr[i] = grouping_with.getInt(i)-2;
-        }
-
-        boolean hasFreeAnswer = question.getBoolean("has_free_answers");
-
-        if (type.contentEquals(TypeQuestions.SINGLE.name())) {
-            int column = question.getInt("column")-2;
-            return new SimpleQuestion(q, a, false, hasFreeAnswer,c, column, gr,d, metadata);
-        } else if (type.contentEquals(TypeQuestions.MULTIPLE.name())) {
-            int column = question.getInt("column")-2;
-            return new SimpleQuestion(q, a, true, hasFreeAnswer,c, column, gr,d, metadata);
-        } else if (type.contentEquals(TypeQuestions.MATRIX_SINGLE.name())) {
-            int start = question.getInt("start")-2;
-            int finish = question.getInt("finish")-2;
-            return new MatrixQuestion(q, a, false, hasFreeAnswer,c, start, finish, gr,d, metadata);
-        } else if (type.contentEquals(TypeQuestions.MATRIX_MULTIPLE.name())) {
-            int start = question.getInt("start")-2;
-            int finish = question.getInt("finish")-2;
-            return new MatrixQuestion(q, a, true, hasFreeAnswer,c, start, finish, gr,d, metadata);
-        } else if (type.contentEquals(TypeQuestions.FREE.name())) {
-            int column = question.getInt("column")-2;
-            return new FreeAnswerQuestion(metadata, q, column,true);
-        } else throw new IllegalArgumentException("Неизвестный тип вопроса.");
-    }
-
-    public String getQuestion() {
-        return question;
-    }
-
-    protected String[] getColumnsName(Table data, int[] cols_indexes) {
-        ArrayList<String> names = (ArrayList<String>) data.columnNames();
-        String[] n = new String[cols_indexes.length];
-        for (int j = 0; j < cols_indexes.length; j++) {
-            n[j] = names.get(cols_indexes[j]);
-        }
-        return n;
-    }
-
+    /**
+     * Округляет до нужного числа позиций <b>стобец</b>
+     * */
     protected DoubleColumn round(NumericColumn<Double> column, int places) {
         DoubleColumn newColumn = DoubleColumn.create(column.name() + "[rounded]", column.size());
         for (int i = 0; i < column.size(); ++i) {
@@ -200,8 +126,10 @@ public abstract class Question {
 
         return newColumn;
     }
-
-    protected Double round(Double num, int places) {
+    /**
+     * Округляет до нужного числа позиций <b>одно число</b>
+     * */
+    private Double round(Double num, int places) {
         if (places < 0) throw new IllegalArgumentException();
 
         BigDecimal bd = new BigDecimal(Double.toString(num));
@@ -209,10 +137,14 @@ public abstract class Question {
         return bd.doubleValue();
     }
 
-    protected NumericColumn<Double> fixProcents(NumericColumn<Double> column) {
+    /**
+     * Проверяет, является ли сумма относительных частот в столбце равной 100%.
+     * Если нет, исправляет погрешность округления путем прибавления к минимальному значению излишка максимального
+     * */
+    protected DoubleColumn fixProcents(DoubleColumn column) {
         if (column.sum() == 100)
             return column;
-        else {//TODO
+        else {
             double delta = round(column.sum() - 100, 2);
             double changed = round(column.max() - delta, 2);
             int imax = 0;

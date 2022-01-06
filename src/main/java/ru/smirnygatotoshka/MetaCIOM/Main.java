@@ -1,43 +1,40 @@
 package ru.smirnygatotoshka.MetaCIOM;
 
-import me.tongfei.progressbar.ProgressBar;
-import ru.smirnygatotoshka.MetaCIOM.io.MetadataParser;
+import ru.smirnygatotoshka.MetaCIOM.io.TableIO;
 import tech.tablesaw.api.Table;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
 
+    private static Metadata metadata;
+
     public static void main(String[] args) {
-        printInfo();
-        String inputPath = parseUserInput();
         try {
-            MetadataParser parser = new MetadataParser(inputPath);
-            Data data = parser.parse();
-            Question[] questions = data.getQuestions();
-            DataCleaner cleaner = new DataCleaner();
-            ArrayList<Table> results = new ArrayList<>();
-            ProgressBar pb = new ProgressBar("Обработка опроса:", questions.length);
-            for (Question q : questions){
-                Table[] cleanTables = cleaner.clean(q);
-                for (Table t : cleanTables) {
-                    Table res = q.calculate(t);
-                    results.add(res);
+            printInfo();
+            String inputPath = parseUserInput();
+            metadata = Metadata.parse(inputPath);
+            if (metadata.getMode() == Metadata.Mode.CALCULATE) {
+                QuestionFactory factory = new QuestionFactory();
+                Table[] result = new Table[metadata.getDescQuestions().length()];
+                TableIO io = metadata.getTableIO();
+                for (int i = 0; i < result.length; i++) {
+                    Question question = factory.build(metadata, metadata.getDescQuestions().getJSONObject(i));
+                    Table data = question.clean();
+                    result[i] = question.calculate(data);
+                    if (metadata.isSaveFreeAnswers() && question.hasFreeAnswers) {
+                        io.writeFreeAnswers(question.getFreeAnswers(), question.question, metadata.getPathToOutputDirectory());
+                    }
+                    System.out.println(question.question + "_" + i);
                 }
-                q.save(results);
-                pb.step();
-                results.clear();
+                io.writeTables(result, metadata.getPathToOutputDirectory());
             }
-            pb.close();
         }
-        catch (IOException | GeneralSecurityException e) {
-            System.err.println("Cannot parse metadata " + inputPath);
+        catch (IOException e){
+            System.err.println("Cannot read/write the table");
             e.printStackTrace();
-            return;
         }
     }
 
